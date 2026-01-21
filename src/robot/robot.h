@@ -1,8 +1,8 @@
 // Файл для функций движения робота
 #pragma once
 
-#define PARROT_IN_ONE_FULL_ROTATION_WHEEL 2500
-#define DIAMETER_WHEEL 6.5
+#define PARROT_IN_ONE_FULL_ROTATION_WHEEL 1320
+#define DIAMETER_WHEEL 8 // cm
 
 #include "BTS7960_PRO.h"
 // #include <Servo.h>
@@ -144,6 +144,11 @@ void setupRobot() {
 //   gy25.delayUpdate(1000);
 // }
 
+int translateSpeedFronCmSecToParrotSec(long int speed) {
+	speed *= PARROT_IN_ONE_FULL_ROTATION_WHEEL;
+	return speed/(3.14*DIAMETER_WHEEL); 
+}
+
 int motorTargetRealSpeedEnc[5] = {0, 0, 0, 0, 0};
 int motorTargetSpeedEnc[5] = {0, 0, 0, 0, 0};
 double motorDifferencial[5] = {0, 0, 0, 0, 0};
@@ -164,9 +169,9 @@ void motorTargetSpeedEncRun(int number, int speed) {
 
 	const int MOTOR_MAX_OUT = 100; // ограничение выхода
 
-	static long lastEnc[3] = {0, 0, 0};
-	static unsigned long lastTime[3] = {0, 0, 0};
-	static int motorOut[3] = {0, 0, 0};
+	static long lastEnc[5] = {0, 0, 0, 0, 0};
+	static unsigned long lastTime[5] = {0, 0, 0, 0, 0};
+	static int motorOut[5] = {0, 0, 0, 0, 0};
 	// motorTargetSpeedEnc[number] = speed;
 	// motorTargetRealSpeedEnc[number] = motorTargetSpeedEnc[number];
 
@@ -221,23 +226,23 @@ void motorTargetSpeedEncRun(int number, int speed) {
 }
 
 void motorCreateTargetSpeedEncRun(int number, int speed=0) {
-	if (number != 1 && number != 2) return;
-	motorTargetSpeedEnc[number] = speed;
+	if (number != 1 && number != 2 && number != 3 && number != 4) return;
+	motorTargetSpeedEnc[number] = translateSpeedFronCmSecToParrotSec(speed);
 }
 
 void motorCreateTargetSpeedEncRun2(int m1, int m2, int m3, int m4) {
-	motorTargetSpeedEnc[1] = m1;
-	motorTargetSpeedEnc[2] = m2;
-	motorTargetSpeedEnc[3] = m3;
-	motorTargetSpeedEnc[4] = m4;
+	motorTargetSpeedEnc[1] = translateSpeedFronCmSecToParrotSec(m1);
+	motorTargetSpeedEnc[2] = translateSpeedFronCmSecToParrotSec(m2);
+	motorTargetSpeedEnc[3] = translateSpeedFronCmSecToParrotSec(m3);
+	motorTargetSpeedEnc[4] = translateSpeedFronCmSecToParrotSec(m4);
 }
 
 const int MOTOR_ENC_A = 10; // задержка по времени между ускорениями на единичку по скорости 
 const int MOTOR_ENC_DENC = 60; // задержка по времени между ускорениями на единичку по скорости 
 
 void motorSpeedEncUpdateNumber(int number) {
-	if (number != 1 && number != 2) return;
-	static unsigned long lastTime2[3] = {0, 0, 0};
+	if (number != 1 && number != 2 && number != 3 && number != 4) return;
+	static unsigned long lastTime2[5] = {0, 0, 0, 0, 0};
 	unsigned long now = millis();
 	// Инициализация при первом вызове для данного мотора
 	if (lastTime2[number] == 0) lastTime2[number] = now;
@@ -257,6 +262,10 @@ void motorSpeedEncUpdateNumber(int number) {
 void motorSpeedEncUpdate() {
 	motorSpeedEncUpdateNumber(1);
 	motorSpeedEncUpdateNumber(2);
+	motorSpeedEncUpdateNumber(3);
+	motorSpeedEncUpdateNumber(4);
+	// for (int i = 0; i<5; i++) Serial.print(String(motorTargetSpeedEnc[i]) + " ");
+	// Serial.println();
 }
 
 // void testErrorEncDistanseRun(int a) {
